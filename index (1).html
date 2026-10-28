@@ -1,0 +1,899 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Protocolo 30K Tático</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one scrolling page, sticky section nav, cards in rows that wrap on phones.
+   Palette: Apple-like neutrals, institutional navy, subtle gold, semantic status colours. */
+:root{
+  --bg:#F5F5F7; --card:#FFFFFF; --fg:#1D1D1F; --sec:#6E6E73; --line:#E5E5EA;
+  --navy:#10283F; --navy-soft:#E9EEF4; --on-navy:#FFFFFF;
+  --gold:#C6A26A; --gold-ink:#8A6A34; --gold-soft:#F7F0E5;
+  --green:#278568; --green-soft:#E5F2EE;
+  --amber:#A86B12; --amber-soft:#FBF0DE;
+  --red:#B3261E; --red-soft:#FBE7E5;
+  --r:16px; --mid:#3D6E9A;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#000000; --card:#1C1C1E; --fg:#F5F5F7; --sec:#98989D; --line:#38383A; --mid:#7FAFD6;
+    --navy:#D6E2EF; --navy-soft:#22303D; --on-navy:#000000;
+    --gold:#D9B77E; --gold-ink:#D9B77E; --gold-soft:#2E2718;
+    --green:#4CC39E; --green-soft:#15302A;
+    --amber:#E8B25B; --amber-soft:#332611;
+    --red:#FF8A80; --red-soft:#3A1B19;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#000000; --card:#1C1C1E; --fg:#F5F5F7; --sec:#98989D; --line:#38383A; --mid:#7FAFD6;
+  --navy:#D6E2EF; --navy-soft:#22303D; --on-navy:#000000;
+  --gold:#D9B77E; --gold-ink:#D9B77E; --gold-soft:#2E2718;
+  --green:#4CC39E; --green-soft:#15302A;
+  --amber:#E8B25B; --amber-soft:#332611;
+  --red:#FF8A80; --red-soft:#3A1B19;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:Inter,-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;overflow-x:hidden;overflow-wrap:anywhere}
+button,input,select,textarea{font-family:inherit}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.top-in{max-width:1180px;margin:0 auto;padding:12px max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px));display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap}
+.brand{font-weight:700;letter-spacing:-.01em;font-size:15px;margin-right:auto}
+.brand span{color:var(--sec);font-weight:500}
+.nav{display:flex;gap:2px;flex-wrap:wrap}
+.nav a{color:var(--sec);text-decoration:none;padding:6px 10px;border-radius:999px;font-size:13px;font-weight:500}
+.nav a:hover,.nav a:focus-visible{background:var(--line);color:var(--fg);outline:none}
+.wrap{max-width:1180px;margin:0 auto;padding:28px max(16px,env(safe-area-inset-right,0px)) 96px max(16px,env(safe-area-inset-left,0px))}
+section{scroll-margin-top:110px;margin-bottom:56px}
+.eyebrow{font-size:12px;color:var(--mid);letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+h1{font-size:46px;line-height:1.02;letter-spacing:-.03em;margin:6px 0 4px;font-weight:700;text-wrap:balance}
+h2{margin:0;font-size:26px;letter-spacing:-.02em;font-weight:700}
+h3{margin:4px 0 0;font-size:18px;letter-spacing:-.01em;font-weight:650}
+p{margin:0}
+.hero p.lead{color:var(--sec);font-size:17px;margin-top:2px}
+.refs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 0}
+.ref{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:13px;color:var(--sec)}
+.ref b{color:var(--fg);font-weight:600}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:18px}
+.flash{font-size:13px;color:var(--green);min-height:18px}
+.hdr{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.hdr p{color:var(--sec);margin-top:4px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;min-width:0}
+.grid2,.grid3,.grid4,.grid5{display:grid;gap:12px}
+.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.grid4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.grid5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.mt{margin-top:12px}
+.kpi .n{font-size:30px;font-weight:700;letter-spacing:-.02em;margin-top:6px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.kpi .l{color:var(--sec);font-size:13px;font-weight:500}
+.kpi .s{color:var(--sec);font-size:12px;margin-top:2px}
+.bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:10px}
+.bar i{display:block;height:100%;width:0;background:var(--mid);border-radius:99px;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.bar.gold i{background:var(--gold)}
+.prog{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.prog strong{font-size:18px;font-weight:600;font-variant-numeric:tabular-nums}
+.prog span{color:var(--sec);font-size:13px}
+.bar-row + .bar-row{margin-top:18px}
+.fr{text-align:left;cursor:pointer;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;color:var(--fg);display:flex;flex-direction:column;gap:4px;min-width:0}
+.fr:hover{border-color:var(--navy)}
+.fr:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+.fr .t{font-weight:600;font-size:13px}
+.fr .c{font-size:12px;color:var(--sec)}
+.fr .bar{margin:6px 0 4px}
+.note{font-size:12px;color:var(--sec)}
+.tag{display:inline-flex;align-items:center;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:600;white-space:nowrap;background:var(--line);color:var(--sec)}
+.st-nao{background:var(--line);color:var(--sec)}
+.st-and{background:var(--navy-soft);color:var(--navy)}
+.st-agu{background:var(--amber-soft);color:var(--amber)}
+.st-con{background:var(--green-soft);color:var(--green)}
+.st-blo{background:var(--red-soft);color:var(--red)}
+.pr-P0{background:var(--gold-soft);color:var(--gold-ink)}
+.pr-P1{background:var(--navy-soft);color:var(--navy)}
+.pr-P2{background:var(--line);color:var(--sec)}
+select,input,textarea{font-size:13px;color:var(--fg);background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 10px;max-width:100%}
+select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--navy);outline-offset:0}
+textarea{width:100%;min-height:96px;resize:vertical}
+input:disabled{opacity:.55}
+.pill{border-radius:999px;padding:5px 10px;font-size:12px;font-weight:600;border:0;cursor:pointer}
+.st-sel{border:0}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--fg);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:500;cursor:pointer}
+.btn:focus-visible,.chk:focus-visible,.chip:focus-visible,.seg button:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+.btn.sm{padding:5px 10px;font-size:12px}
+.btn.on,.btn.primary{background:var(--navy);color:var(--on-navy);border-color:var(--navy)}
+.btn.danger{color:var(--red)}
+.seg{display:inline-flex;background:var(--line);border-radius:999px;padding:3px;flex-wrap:wrap}
+.seg button,.chip{border:0;background:transparent;padding:6px 12px;border-radius:999px;font-size:13px;color:var(--sec);cursor:pointer}
+.seg button.on{background:var(--card);color:var(--fg);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--card)}
+.chip.on{background:var(--navy);color:var(--on-navy);border-color:var(--navy)}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.controls .grp{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#q{min-width:220px;flex:1;max-width:340px}
+.group{margin-top:14px;padding:0 18px 8px}
+.group summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:16px 0 12px;border-bottom:1px solid var(--line)}
+.group summary::-webkit-details-marker{display:none}
+.group summary::after{content:"";width:8px;height:8px;border-right:1.5px solid var(--sec);border-bottom:1.5px solid var(--sec);transform:rotate(45deg);flex:none;margin:0 4px 4px 4px;transition:transform .2s}
+.group:not([open]) summary::after{transform:rotate(-45deg);margin:-4px 4px 0}
+.g-t{font-weight:700;font-size:16px;letter-spacing:-.01em}
+.g-sub{font-size:12px;color:var(--sec);margin-top:2px}
+.g-cnt{font-size:12px;color:var(--sec);white-space:nowrap;margin-left:auto}
+.task{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:14px;align-items:center;padding:14px 0;border-top:1px solid var(--line)}
+.task:first-of-type{border-top:0}
+.chk{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--sec);background:var(--card);cursor:pointer;display:grid;place-items:center;padding:0}
+.chk.on{background:var(--green);border-color:var(--green)}
+.chk.on::after{content:"";width:6px;height:10px;border:solid var(--card);border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.t-title{font-weight:600;font-size:15px;cursor:pointer;background:none;border:0;padding:0;text-align:left;color:var(--fg);max-width:100%}
+.t-title:hover{text-decoration:underline}
+.t-title.done{text-decoration:line-through;color:var(--sec)}
+.t-desc{color:var(--sec);font-size:13px;margin-top:2px}
+.t-meta{display:flex;gap:6px 10px;flex-wrap:wrap;margin-top:8px;align-items:center;font-size:12px;color:var(--sec)}
+.t-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.add-line{padding:12px 0 6px;border-top:1px solid var(--line)}
+.fo{display:flex;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.fo:first-of-type{border-top:0}
+.fo-t{font-weight:600;font-size:14px}
+.rot-list{list-style:none;padding:0;margin:12px 0 0}
+.rot-list li{padding:9px 0;border-top:1px solid var(--line);display:flex;gap:8px;align-items:center;font-size:14px}
+.rot-list li input{flex:1;min-width:0}
+.pd{display:flex;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line);flex-wrap:wrap}
+.pd:first-of-type{border-top:0}
+.pd-body{flex:1 1 220px;min-width:0}
+.pd-in{width:100%}
+.pd.res .pd-t{text-decoration:line-through;color:var(--sec)}
+.pd select{max-width:100%;flex:1 1 200px}
+.addrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.addrow input{flex:1 1 220px}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.field label{display:block;font-size:12px;color:var(--sec);font-weight:600;margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%}
+.ind-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:4px 28px;margin-top:8px}
+.ig .eyebrow{margin:16px 0 4px}
+.ir{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--line);font-size:13px;align-items:center}
+.ir>span:first-child{color:var(--sec)}
+.iv{font-weight:600;text-align:right;min-width:0}
+.iv input{width:140px;text-align:right}
+.hist{margin-top:10px}
+.hist div{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line);font-size:13px}
+.hist div span:last-child{font-weight:600;font-variant-numeric:tabular-nums}
+.foot{margin-top:40px;color:var(--sec);font-size:12px;text-align:center}
+/* overlay sheet */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.28);opacity:0;pointer-events:none;transition:opacity .25s;z-index:50}
+.ov.open{opacity:1;pointer-events:auto}
+.sheet{position:fixed;top:0;right:0;bottom:0;width:min(540px,100%);background:var(--card);border-left:1px solid var(--line);transform:translateX(100%);transition:transform .3s cubic-bezier(.2,.8,.2,1);z-index:51;overflow:auto;padding:22px max(20px,env(safe-area-inset-right,0px)) 28px max(20px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px}
+.sheet.open{transform:none}
+.sh-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.sh-head h3{font-size:20px}
+.sh-desc{color:var(--sec)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sh-foot{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.msg{font-size:13px;color:var(--red);min-height:18px}
+body:not(.editing) .ed-only{display:none!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+@media (max-width:900px){
+  .grid4,.grid5{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid3{grid-template-columns:1fr}
+  .grid2{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  h1{font-size:36px}
+  .form-grid,.row2{grid-template-columns:1fr}
+  .task{grid-template-columns:22px minmax(0,1fr)}
+  .task .t-right{grid-column:2;justify-content:flex-start}
+  .group{padding:0 14px 8px}
+  .grid5>:last-child:nth-child(odd){grid-column:1/-1}
+  .brand{width:100%}
+  #q{min-width:0;max-width:100%;flex:1 1 100%}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="brand">PROTOCOLO 30K <span>· Over Barber Conceito</span></div>
+    <nav class="nav" aria-label="Seções">
+      <a href="#s-visao">Visão geral</a>
+      <a href="#s-plano">Plano de ação</a>
+      <a href="#s-rotina">Rotina</a>
+      <a href="#s-metas">Metas</a>
+      <a href="#s-pend">Pendências</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+<section id="s-visao">
+  <div class="eyebrow">Execution OS · v1.0</div>
+  <h1>PROTOCOLO 30K</h1>
+  <p class="lead">Da estratégia à execução.</p>
+  <div class="refs">
+    <span class="ref">Meta <b>R$ 30.000/mês</b></span>
+    <span class="ref"><b>200</b> atendimentos</span>
+    <span class="ref"><b>R$ 150</b> ticket médio</span>
+  </div>
+  <div class="toolbar">
+    <button class="btn" id="btn-edit" data-act="edit-toggle">Editar plano</button>
+    <button class="btn" data-act="copy-summary">Resumo da reunião</button>
+    <button class="btn" data-act="backup">Backup JSON</button>
+    <button class="btn" data-act="import">Importar</button>
+    <button class="btn danger" data-act="restore" data-confirm="Confirmar restauração">Restaurar original</button>
+    <span class="flash" id="flash" role="status" aria-live="polite"></span>
+  </div>
+
+  <div class="grid4 mt" id="kpis" style="margin-top:28px"></div>
+
+  <div class="card mt">
+    <div class="prog" id="prog-txt"></div>
+    <div class="bar"><i id="prog-bar"></i></div>
+    <p class="note" style="margin-top:8px">Todas as ações começam como não iniciadas. Nenhuma conclusão foi inventada.</p>
+  </div>
+
+  <div class="eyebrow" style="margin:28px 0 10px">Frentes estratégicas</div>
+  <div class="grid5" id="frentes"></div>
+
+  <div class="card mt">
+    <div class="prog">
+      <div><div class="eyebrow">Foco da semana</div><h3>Três a cinco ações escolhidas manualmente</h3></div>
+      <span class="note" id="foco-n"></span>
+    </div>
+    <div id="foco" style="margin-top:8px"></div>
+  </div>
+</section>
+
+<section id="s-plano">
+  <div class="hdr">
+    <div><div class="eyebrow">Ações</div><h2>Plano de ação</h2><p>Vinte e cinco ações em cinco frentes. Clique no título para ver e editar detalhes.</p></div>
+  </div>
+  <div class="card">
+    <div class="controls">
+      <div class="grp">
+        <div class="seg" role="group" aria-label="Modo de visualização">
+          <button data-modo="frente" class="on">Por frente</button>
+          <button data-modo="prio">Por prioridade</button>
+        </div>
+      </div>
+      <div class="grp">
+        <input id="q" type="search" placeholder="Buscar ação ou responsável" aria-label="Buscar">
+        <select id="f-resp" aria-label="Filtrar por responsável"></select>
+      </div>
+    </div>
+    <div class="chips" style="margin-top:12px" role="group" aria-label="Filtros">
+      <button class="chip on" data-f="todas">Todas</button>
+      <button class="chip" data-f="nao">Não iniciadas</button>
+      <button class="chip" data-f="and">Em andamento</button>
+      <button class="chip" data-f="late">Atrasadas</button>
+      <button class="chip" data-f="con">Concluídas</button>
+    </div>
+  </div>
+  <div id="plano-list"></div>
+</section>
+
+<section id="s-rotina">
+  <div class="hdr">
+    <div><div class="eyebrow">Ritmo</div><h2>Rotina do Protocolo 30K</h2><p>Diariamente, a cada atendimento e semanalmente.</p></div>
+  </div>
+  <div class="grid3" id="rotinas"></div>
+</section>
+
+<section id="s-metas">
+  <div class="hdr">
+    <div><div class="eyebrow">Termômetro</div><h2>Painel de metas · 30K</h2><p>Preencha as entradas do período. Os valores são calculados automaticamente.</p></div>
+  </div>
+  <div class="grid2">
+    <div class="card" id="entradas"></div>
+    <div class="card" id="metas"></div>
+  </div>
+  <div class="card mt">
+    <div class="eyebrow">Realizado no período</div>
+    <div id="bars" style="margin-top:12px"></div>
+  </div>
+  <div class="grid5 mt" id="calc"></div>
+  <div class="grid2 mt">
+    <div class="card">
+      <div class="eyebrow">Referência simplificada</div>
+      <h3>Quatro semanas</h3>
+      <p class="note" style="margin-top:10px;font-size:14px;color:var(--fg)">R$ 7.500 por semana e 50 atendimentos por semana.</p>
+      <p class="note" style="margin-top:10px">Referências matemáticas, não metas semanais aprovadas. Ajuste para meses com outro número de semanas e dias operacionais.</p>
+    </div>
+    <div class="card">
+      <div class="eyebrow">Histórico · BarbSuite 01 a 27/10/2026</div>
+      <h3>Período parcial, não é mês completo</h3>
+      <div class="hist">
+        <div><span>Faturamento bruto</span><span>R$ 16.584,83</span></div>
+        <div><span>Atendimentos</span><span>151</span></div>
+        <div><span>Ticket médio calculado</span><span>R$ 109,83</span></div>
+        <div><span>Novos clientes registrados</span><span>94</span></div>
+        <div><span>Over First realizados</span><span>29</span></div>
+        <div><span>Serviços realizados</span><span>211</span></div>
+      </div>
+      <p class="note" style="margin-top:10px">Referência real. Não entra nos cálculos do painel nem representa outro mês.</p>
+    </div>
+  </div>
+  <div class="card mt">
+    <div class="eyebrow">Indicadores</div>
+    <h3>Sem números fictícios</h3>
+    <p class="note" style="margin-top:4px">Indicadores ainda não levantados aparecem como “A levantar”. Edite com Editar plano.</p>
+    <div class="ind-grid" id="kpi-grid"></div>
+  </div>
+</section>
+
+<section id="s-pend">
+  <div class="hdr">
+    <div><div class="eyebrow">Decisões</div><h2>Pendências e decisões</h2><p id="pend-n" class="note"></p></div>
+  </div>
+  <div class="grid2" id="pend-list"></div>
+</section>
+
+<p class="foot">Dados salvos apenas neste navegador. Não há sincronização em nuvem. Use Backup JSON para guardar uma cópia.</p>
+</main>
+
+<div class="ov" id="ov" data-act="close"></div>
+<aside class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Detalhes"></aside>
+<datalist id="dl-resp">
+  <option value="Recepção"></option>
+  <option value="Recepção e gestão"></option>
+  <option value="Jorge"></option>
+  <option value="Guilherme"></option>
+  <option value="Jorge, Guilherme e recepção"></option>
+  <option value="Gestão"></option>
+  <option value="Gestão e recepção"></option>
+  <option value="Marketing, gestão e recepção"></option>
+  <option value="Terceiro barbeiro"></option>
+</datalist>
+
+<script>
+const KEY = 'protocolo-30k-tatico-v1';
+const FRENTES = [
+  {id:'com', nome:'Comercial & CRM', resp:'Recepcionista / gestão'},
+  {id:'atd', nome:'Atendimento & Monetização', resp:'Jorge, Guilherme, recepção e gestão'},
+  {id:'club', nome:'Over Club — Indicação & Cashback', resp:'Gestão / recepção', nota:'Clube de indicação com cashback. Não é assinatura.'},
+  {id:'aq', nome:'Aquisição & Parcerias', resp:'Marketing / gestão / recepção'},
+  {id:'cap', nome:'Capacidade & Gestão', resp:'Gestão'}
+];
+const STATUS = ['Não iniciada','Em andamento','Aguardando validação','Concluída','Bloqueada'];
+const PRIOS = [['P0','P0 · Imediata'],['P1','P1 · Alta'],['P2','P2 · Normal']];
+const PEND_GROUPS = ['Over Club','Aquisição local','Capacidade','Indicadores','Operação'];
+const KPIS = [
+  ['Aquisição',[['leads','Leads recebidos'],['novos','Novos clientes atendidos'],['cac','CAC do tráfego'],['indic','Indicações recebidas']]],
+  ['Conversão',[['lconv','Leads convertidos em agendamentos'],['comp','Comparecimentos'],['taxa','Taxa de conversão']]],
+  ['Monetização',[['tm','Ticket médio'],['ess','Vendas do Essence'],['rpp','Receita por profissional']]],
+  ['Retenção',[['reag','Clientes reagendados'],['taxr','Taxa de reagendamento'],['react','Clientes reativados']]],
+  ['Gestão',[['fat','Faturamento'],['atd','Atendimentos'],['ocup','Ocupação'],['prog','Progresso do plano tático']]]
+];
+const T0 = [
+  ['t01','com','Implantar CRM e base de contatos','Implantar CRM e organizar a base dos 117 contatos importados do BarbSuite.','P0','Recepcionista / gestão'],
+  ['t02','com','Reativar clientes pelo histórico','Levantar a data do último atendimento e identificar clientes elegíveis para reativação.','P0','Recepcionista / gestão'],
+  ['t03','com','Rotina diária de follow-up','Definir rotina diária de follow-up de leads e clientes sem retorno.','P0','Recepcionista / gestão'],
+  ['t04','com','Padronizar abordagem no WhatsApp','Padronizar abordagem do WhatsApp: primeiro contato, oferta, agendamento e recuperação.','P0','Recepcionista / gestão'],
+  ['t05','com','Confirmação de agendamentos','Implantar confirmação de agendamento e registrar faltas e cancelamentos.','P1','Recepcionista / gestão'],
+  ['t06','atd','Treinar venda consultiva do Over Essence','Treinar barbeiros para apresentação consultiva do Over Essence (R$ 197).','P0','Jorge, Guilherme, recepção e gestão'],
+  ['t07','atd','Roteiro de diagnóstico e recomendação','Criar roteiro simples de diagnóstico, recomendação e apresentação dos serviços.','P1','Jorge, Guilherme, recepção e gestão'],
+  ['t08','atd','Convite de reagendamento','Implantar convite de reagendamento ao final de cada atendimento.','P0','Jorge, Guilherme, recepção e gestão'],
+  ['t09','atd','Playbook da jornada do cliente','Desenvolver playbook dos rituais da jornada do cliente, da chegada ao pós-atendimento.','P1','Jorge, Guilherme, recepção e gestão'],
+  ['t10','atd','Rentabilidade do Essence e combos','Validar tempo, custo e margem do Essence e dos demais combos.','P1','Jorge, Guilherme, recepção e gestão'],
+  ['t11','club','Regras do Over Club','Formalizar regras: adesão após Essence, indicação válida e cálculo do cashback de 10%.','P0','Gestão / recepção'],
+  ['t12','club','Resgate, validade e estornos','Definir resgate em serviços/consumação, validade individual de 30 dias e tratamento de estornos.','P0','Gestão / recepção'],
+  ['t13','club','Controle de indicações e cashback','Criar cadastro e controle de indicações, créditos, utilização e vencimentos.','P1','Gestão / recepção'],
+  ['t14','club','Materiais e treinamento do Over Club','Criar materiais de apresentação do Over Club e treinar a equipe.','P1','Gestão / recepção'],
+  ['t15','club','Teste do fluxo completo','Testar o fluxo completo de uma indicação antes de lançar.','P1','Gestão / recepção'],
+  ['t16','aq','Acompanhar campanha Over First','Manter e acompanhar campanha Over First (R$ 135), registrando origem e conversões.','P0','Marketing / gestão / recepção'],
+  ['t17','aq','Cartões físicos Over First','Criar cartões físicos Over First com QR Code e identificação de origem.','P1','Marketing / gestão / recepção'],
+  ['t18','aq','Mapear pontos próximos','Mapear pontos próximos: parceiros comerciais, condomínios e circulação qualificada.','P1','Marketing / gestão / recepção'],
+  ['t19','aq','Distribuição-piloto','Obter autorizações e executar distribuição-piloto com controle dos cartões.','P1','Marketing / gestão / recepção'],
+  ['t20','aq','Três parceiros influentes','Selecionar três parceiros influentes e definir contrapartidas e limites de cortesias.','P1','Marketing / gestão / recepção'],
+  ['t21','cap','Ocupação da agenda','Identificar horários ociosos, picos de procura e demanda não atendida.','P0','Gestão'],
+  ['t22','cap','Dia de reforço do terceiro barbeiro','Definir e testar o dia de reforço do terceiro barbeiro.','P1','Gestão'],
+  ['t23','cap','Dashboard semanal','Implantar dashboard semanal com termômetro da meta de R$ 30 mil.','P0','Gestão'],
+  ['t24','cap','Indicadores comerciais','Levantar CAC do tráfego, conversão de leads e taxa de reagendamento.','P0','Gestão'],
+  ['t25','cap','Reunião semanal de acompanhamento','Realizar reunião semanal para revisar resultados, responsáveis e próximas ações.','P0','Gestão']
+];
+const PEND0 = [
+  ['Over Club','Regras detalhadas de adesão'],['Over Club','Validação das indicações'],['Over Club','Condições de resgate'],['Over Club','Tratamento de cancelamentos'],['Over Club','Controle do cashback'],
+  ['Aquisição local','Parceiros comerciais'],['Aquisição local','Pontos de distribuição'],['Aquisição local','Quantidade inicial de cartões'],['Aquisição local','Códigos de identificação'],
+  ['Capacidade','Dia de atuação do terceiro barbeiro'],
+  ['Indicadores','CAC'],['Indicadores','Taxa de conversão'],['Indicadores','Taxa de reagendamento'],
+  ['Operação','Responsáveis finais'],['Operação','Prazos das tarefas'],['Operação','Custos e margens dos combos']
+];
+
+const clone = o => JSON.parse(JSON.stringify(o));
+const today = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10); };
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $ = s => document.querySelector(s);
+const brl = v => Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const fmtD = s => { if(!s) return ''; const [y,m,d] = String(s).slice(0,10).split('-'); return `${d}/${m}/${y}`; };
+const num = v => { const x = parseFloat(v); return isNaN(x) ? NaN : x; };
+const ST_KEYS = ['nao','and','agu','con','blo'];
+const stCls = s => 'st-' + (ST_KEYS[STATUS.indexOf(s)] || 'nao');
+const blank = () => ({frente:'com',titulo:'',descricao:'',prioridade:'P1',status:'Não iniciada',responsavel:'',prazo:'',observacoes:'',evidencia:'',dependeDe:'',foco:false,atualizado:''});
+
+function defaults(){
+  return {
+    meta:{mensal:30000, atendimentos:200, ticket:150},
+    periodo:{mes:'Outubro/2026 (parcial, 01 a 27)',faturamento:'16584.83',atendimentos:'151',diasOperacionais:'',diasRestantes:''},
+    tarefas:T0.map(([id,frente,titulo,descricao,prioridade,responsavel]) => ({...blank(), id, frente, titulo, descricao, prioridade, responsavel})),
+    rotinas:{
+      diario:['Conferir agenda','Responder novos leads','Executar follow-ups','Confirmar horários','Registrar reagendamentos'],
+      barbeiros:['Diagnóstico consultivo','Oferta adequada do Essence','Experiência padronizada','Convite para retorno'],
+      semanal:['Revisar faturamento','Revisar atendimentos e ticket','Revisar conversão e reagendamentos','Revisar resultados das ações comerciais']
+    },
+    pendencias:PEND0.map(([grupo,texto],i) => ({id:'p'+String(i+1).padStart(2,'0'), grupo, texto, resolvido:false, tarefaId:''})),
+    indicadores:{}
+  };
+}
+const DEFAULT = defaults();
+
+function validate(o){
+  if(!o || typeof o !== 'object') return {ok:false, err:'O conteúdo não tem a estrutura esperada.'};
+  if(!Array.isArray(o.tarefas) || !o.tarefas.every(t => t && typeof t.id === 'string' && typeof t.titulo === 'string')) return {ok:false, err:'Lista de ações ausente ou mal formada.'};
+  if(o.pendencias !== undefined && !Array.isArray(o.pendencias)) return {ok:false, err:'Pendências mal formadas.'};
+  if(o.rotinas !== undefined && typeof o.rotinas !== 'object') return {ok:false, err:'Rotinas mal formadas.'};
+  return {ok:true};
+}
+function merge(o){
+  const b = defaults();
+  return {
+    meta:{...b.meta, ...(o.meta||{})},
+    periodo:{...b.periodo, ...(o.periodo||{})},
+    tarefas:o.tarefas.map(t => ({...blank(), ...t, status: STATUS.includes(t.status) ? t.status : 'Não iniciada'})),
+    rotinas:{...b.rotinas, ...(o.rotinas||{})},
+    pendencias:o.pendencias || b.pendencias,
+    indicadores:{...(o.indicadores||{})}
+  };
+}
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(raw){ const o = JSON.parse(raw); if(validate(o).ok) return merge(o); }
+  }catch(e){}
+  return clone(DEFAULT);
+}
+function save(){
+  try{
+    localStorage.setItem(KEY, JSON.stringify(state));
+    $('#save-state') && ($('#save-state').textContent = '');
+  }catch(e){}
+}
+
+let state = load();
+let mode = 'view';
+let ui = {modo:'frente', filtro:'todas', q:'', resp:'', open:{}};
+let sheetTask = null;
+
+const task = id => state.tarefas.find(t => t.id === id);
+const isLate = t => !!t.prazo && t.prazo < today() && t.status !== 'Concluída';
+function stats(){
+  const T = state.tarefas;
+  const done = T.filter(t => t.status === 'Concluída').length;
+  return {
+    total:T.length, done,
+    and:T.filter(t => t.status === 'Em andamento').length,
+    pend:T.filter(t => ['Não iniciada','Aguardando validação'].includes(t.status)).length,
+    late:T.filter(isLate).length,
+    pct: T.length ? Math.round(done / T.length * 100) : 0
+  };
+}
+const statusOpts = sel => STATUS.map(s => `<option value="${esc(s)}" ${s===sel?'selected':''}>${esc(s)}</option>`).join('');
+const prioOpts = sel => PRIOS.map(([k,l]) => `<option value="${k}" ${k===sel?'selected':''}>${l}</option>`).join('');
+
+function flash(t){
+  const f = $('#flash'); f.textContent = t;
+  clearTimeout(flash._t); flash._t = setTimeout(() => f.textContent = '', 3000);
+}
+function commit(){ save(); renderAll(); }
+
+/* ---------- render ---------- */
+function renderAll(){
+  renderVisao(); renderPlanoControls(); renderPlanoList(); renderRotina(); renderMetas(); renderPend();
+  applyMode();
+}
+function applyMode(){
+  document.body.classList.toggle('editing', mode === 'edit');
+  const b = $('#btn-edit');
+  b.textContent = mode === 'edit' ? 'Concluir edição' : 'Editar plano';
+  b.classList.toggle('primary', mode === 'edit');
+}
+
+function renderVisao(){
+  const s = stats();
+  $('#kpis').innerHTML = [
+    ['Tarefas concluídas', s.done, `de ${s.total} ações`],
+    ['Em andamento', s.and, 'ações em execução'],
+    ['Pendências', s.pend, 'não iniciadas ou aguardando validação'],
+    ['Atrasadas', s.late, 'prazo vencido e não concluídas']
+  ].map(([l,n,sub]) => `<div class="card kpi"><div class="l">${l}</div><div class="n">${n}</div><div class="s">${sub}</div></div>`).join('');
+  $('#prog-txt').innerHTML = `<strong>${s.done} de ${s.total} ações concluídas</strong><span>${s.pct}%</span>`;
+  $('#prog-bar').style.width = s.pct + '%';
+  $('#frentes').innerHTML = FRENTES.map(f => {
+    const ts = state.tarefas.filter(t => t.frente === f.id);
+    const d = ts.filter(t => t.status === 'Concluída').length;
+    const p = ts.length ? Math.round(d / ts.length * 100) : 0;
+    return `<button class="fr" data-act="goto" data-id="${f.id}">
+      <span class="t">${esc(f.nome)}</span>
+      <span class="c">${ts.length} ações · ${d} concluídas</span>
+      <span class="bar"><i style="width:${p}%"></i></span>
+      <span class="c">${esc(f.resp)}</span></button>`;
+  }).join('');
+  const foco = state.tarefas.filter(t => t.foco);
+  $('#foco-n').textContent = `${foco.length} de 5`;
+  $('#foco').innerHTML = foco.length
+    ? foco.map(t => `<div class="fo">
+        <button class="chk ${t.status==='Concluída'?'on':''}" data-act="check" data-id="${t.id}" aria-label="Marcar como concluída"></button>
+        <div style="min-width:0"><div class="fo-t">${esc(t.titulo)}</div>
+        <div class="t-meta"><span class="tag ${stCls(t.status)}">${esc(t.status)}</span><span>${esc(t.responsavel||'Sem responsável')}</span></div></div></div>`).join('')
+    : '<p class="note">Nenhuma ação em foco. Use o botão Foco no plano de ação para escolher de três a cinco prioridades da semana.</p>';
+}
+
+function renderPlanoControls(){
+  document.querySelectorAll('[data-modo]').forEach(b => b.classList.toggle('on', b.dataset.modo === ui.modo));
+  document.querySelectorAll('[data-f]').forEach(b => b.classList.toggle('on', b.dataset.f === ui.filtro));
+  const resps = [...new Set(state.tarefas.map(t => t.responsavel).filter(Boolean))].sort();
+  if(ui.resp && !resps.includes(ui.resp)) ui.resp = '';
+  $('#f-resp').innerHTML = '<option value="">Todos os responsáveis</option>' +
+    resps.map(r => `<option value="${esc(r)}" ${r===ui.resp?'selected':''}>${esc(r)}</option>`).join('');
+}
+const FILT = {
+  todas: () => true,
+  nao: t => t.status === 'Não iniciada',
+  and: t => t.status === 'Em andamento',
+  late: isLate,
+  con: t => t.status === 'Concluída'
+};
+function taskRow(t){
+  const done = t.status === 'Concluída';
+  return `<div class="task">
+    <button class="chk ${done?'on':''}" data-act="check" data-id="${t.id}" aria-label="Marcar como concluída" aria-pressed="${done}"></button>
+    <div style="min-width:0">
+      <button class="t-title ${done?'done':''}" data-act="open" data-id="${t.id}">${esc(t.titulo)}</button>
+      <div class="t-desc">${esc(t.descricao)}</div>
+      <div class="t-meta">
+        <span class="tag pr-${esc(t.prioridade)}">${esc(t.prioridade)}</span>
+        <span>${esc(t.responsavel || 'Sem responsável')}</span>
+        ${t.prazo ? `<span>Prazo ${fmtD(t.prazo)}</span>` : ''}
+        ${isLate(t) ? '<span class="tag st-blo">Atrasada</span>' : ''}
+        ${t.foco ? '<span class="tag st-and">Foco</span>' : ''}
+        ${t.evidencia ? '<span>Com evidência</span>' : ''}
+      </div>
+    </div>
+    <div class="t-right">
+      <select class="pill st-sel ${stCls(t.status)}" data-tstatus="${t.id}" aria-label="Status">${statusOpts(t.status)}</select>
+      <select class="pill" data-tprio="${t.id}" aria-label="Prioridade">${prioOpts(t.prioridade)}</select>
+      <button class="btn sm ${t.foco?'on':''}" data-act="foco" data-id="${t.id}">${t.foco?'Em foco':'Foco'}</button>
+    </div>
+  </div>`;
+}
+function renderPlanoList(){
+  const q = ui.q.trim().toLowerCase();
+  const list = state.tarefas.filter(t =>
+    FILT[ui.filtro](t) &&
+    (!ui.resp || t.responsavel === ui.resp) &&
+    (!q || (t.titulo + ' ' + t.descricao + ' ' + t.responsavel).toLowerCase().includes(q)));
+  const ed = mode === 'edit';
+  const groups = ui.modo === 'frente'
+    ? FRENTES.map(f => ({k:f.id, title:f.nome, sub:'Responsável principal: ' + f.resp + (f.nota ? ' · ' + f.nota : ''), add:f.id, items:list.filter(t => t.frente === f.id), all:state.tarefas.filter(t => t.frente === f.id)}))
+    : PRIOS.map(([k,l]) => ({k, title:l, sub:'', add:null, items:list.filter(t => t.prioridade === k), all:state.tarefas.filter(t => t.prioridade === k)}));
+  $('#plano-list').innerHTML = groups.map(g => {
+    const dn = g.all.filter(t => t.status === 'Concluída').length;
+    const open = ui.open[g.k] !== false;
+    return `<details class="card group" id="g-${g.k}" data-gk="${g.k}" ${open?'open':''}>
+      <summary><div style="min-width:0"><div class="g-t">${esc(g.title)}</div>${g.sub?`<div class="g-sub">${esc(g.sub)}</div>`:''}</div>
+      <span class="g-cnt">${dn} de ${g.all.length} concluídas</span></summary>
+      ${g.items.length ? g.items.map(taskRow).join('') : '<p class="note" style="padding:14px 0">Nenhuma ação neste recorte.</p>'}
+      ${ed && g.add ? `<div class="add-line"><button class="btn sm" data-act="add-task" data-id="${g.add}">+ Nova ação nesta frente</button></div>` : ''}
+    </details>`;
+  }).join('');
+}
+document.addEventListener('toggle', e => {
+  if(e.target.dataset && e.target.dataset.gk) ui.open[e.target.dataset.gk] = e.target.open;
+}, true);
+
+function renderRotina(){
+  const ed = mode === 'edit';
+  const G = [['diario','Diariamente','Recepcionista'],['barbeiros','A cada atendimento','Barbeiros'],['semanal','Semanalmente','Gestão']];
+  $('#rotinas').innerHTML = G.map(([k,t,who]) => `<div class="card">
+    <div class="eyebrow">${t}</div><h3>${who}</h3>
+    <ul class="rot-list">${state.rotinas[k].map((it,i) => ed
+      ? `<li><input data-rot="${k}|${i}" value="${esc(it)}" aria-label="Atividade"><button class="btn sm danger" data-act="rot-del" data-g="${k}" data-i="${i}">Remover</button></li>`
+      : `<li>${esc(it)}</li>`).join('')}</ul>
+    ${ed ? `<button class="btn sm" style="margin-top:12px" data-act="rot-add" data-g="${k}">+ Adicionar atividade</button>` : ''}
+  </div>`).join('');
+}
+
+function renderMetas(){
+  const ed = mode === 'edit', p = state.periodo, m = state.meta;
+  $('#entradas').innerHTML = `<div class="eyebrow">Entradas do período</div><h3>Atualize quando quiser</h3>
+    <div class="form-grid">
+      <div class="field"><label for="i-mes">Mês de referência</label><input id="i-mes" type="text" data-path="periodo.mes" value="${esc(p.mes)}" placeholder="Ex.: novembro/2026"></div>
+      <div class="field"><label for="i-fat">Faturamento acumulado (R$)</label><input id="i-fat" type="number" step="0.01" min="0" data-path="periodo.faturamento" value="${esc(p.faturamento)}"></div>
+      <div class="field"><label for="i-at">Atendimentos acumulados</label><input id="i-at" type="number" min="0" data-path="periodo.atendimentos" value="${esc(p.atendimentos)}"></div>
+      <div class="field"><label for="i-dias">Número de dias operacionais</label><input id="i-dias" type="number" min="0" data-path="periodo.diasOperacionais" value="${esc(p.diasOperacionais)}"></div>
+      <div class="field"><label for="i-rest">Dias operacionais restantes</label><input id="i-rest" type="number" min="0" data-path="periodo.diasRestantes" value="${esc(p.diasRestantes)}"></div>
+    </div>`;
+  $('#metas').innerHTML = `<div class="eyebrow">Metas aprovadas</div><h3>Referência do protocolo</h3>
+    <div class="form-grid">
+      <div class="field"><label for="m-mensal">Meta mensal (R$)</label><input id="m-mensal" type="number" min="0" data-path="meta.mensal" value="${m.mensal}" ${ed?'':'disabled'}></div>
+      <div class="field"><label for="m-at">Meta de atendimentos</label><input id="m-at" type="number" min="0" data-path="meta.atendimentos" value="${m.atendimentos}" ${ed?'':'disabled'}></div>
+      <div class="field"><label for="m-tk">Ticket médio-alvo (R$)</label><input id="m-tk" type="number" min="0" data-path="meta.ticket" value="${m.ticket}" ${ed?'':'disabled'}></div>
+    </div>
+    <p class="note" style="margin-top:10px">${ed ? 'Metas editáveis neste modo.' : 'Use Editar plano para alterar as metas.'}</p>`;
+
+  const fat = num(p.faturamento), at = num(p.atendimentos), rest = num(p.diasRestantes);
+  const fatOk = !isNaN(fat), atOk = !isNaN(at), restOk = !isNaN(rest) && rest > 0;
+  const pct = fatOk && m.mensal ? fat / m.mensal * 100 : 0;
+  const faltR = fatOk ? Math.max(0, m.mensal - fat) : null;
+  const faltA = atOk ? Math.max(0, m.atendimentos - at) : null;
+  const ticket = fatOk && atOk && at > 0 ? fat / at : null;
+  const mediaR = fatOk && restOk ? faltR / rest : null;
+  const mediaA = atOk && restOk ? faltA / rest : null;
+  const dec = v => v.toFixed(1).replace('.', ',');
+
+  $('#bars').innerHTML = `
+    <div class="bar-row"><div class="prog"><strong>${fatOk ? brl(fat) : 'R$ —'} <span>de ${brl(m.mensal)}</span></strong><span>${fatOk ? dec(pct) + '%' : 'A preencher'}</span></div>
+    <div class="bar"><i style="width:${Math.min(100,pct)}%"></i></div></div>
+    <div class="bar-row"><div class="prog"><strong>${atOk ? at : '—'} <span>de ${m.atendimentos} atendimentos</span></strong><span>${atOk ? Math.min(100, Math.round(at / m.atendimentos * 100)) + '%' : 'A preencher'}</span></div>
+    <div class="bar gold"><i style="width:${Math.min(100, atOk ? at / m.atendimentos * 100 : 0)}%"></i></div></div>`;
+
+  $('#calc').innerHTML = [
+    ['Percentual da meta', fatOk ? dec(pct) + '%' : 'A preencher', ''],
+    ['Receita faltante', faltR !== null ? brl(faltR) : 'A preencher', ''],
+    ['Atendimentos faltantes', faltA !== null ? String(faltA) : 'A preencher', ''],
+    ['Ticket médio realizado', ticket !== null ? brl(ticket) : 'A preencher', 'Faturamento ÷ atendimentos'],
+    ['Média necessária por dia', restOk ? (mediaR !== null ? brl(mediaR) : '—') + (mediaA !== null ? ' · ' + dec(mediaA) + ' atend.' : '') : 'Informe os dias restantes', 'no restante do período']
+  ].map(([l,n,s]) => `<div class="card kpi"><div class="l">${l}</div><div class="n" style="font-size:22px">${n}</div>${s?`<div class="s">${s}</div>`:''}</div>`).join('');
+
+  $('#kpi-grid').innerHTML = KPIS.map(([g,items]) => `<div class="ig"><div class="eyebrow">${g}</div>${items.map(([k,l]) => {
+    let v;
+    if(k === 'prog') v = `${stats().pct}% das ações concluídas`;
+    else {
+      const raw = state.indicadores[k];
+      v = ed
+        ? `<input data-ind="${k}" value="${esc(raw || '')}" placeholder="A levantar" aria-label="${esc(l)}">`
+        : (raw ? esc(raw) : '<span class="note">A levantar</span>');
+    }
+    return `<div class="ir"><span>${l}</span><span class="iv">${v}</span></div>`;
+  }).join('')}</div>`).join('');
+}
+
+function renderPend(){
+  const ed = mode === 'edit';
+  const P = state.pendencias;
+  $('#pend-n').textContent = `${P.filter(p => p.resolvido).length} de ${P.length} resolvidas`;
+  const groups = [...new Set([...PEND_GROUPS, ...P.map(p => p.grupo)])];
+  const cards = groups.map(g => {
+    const items = P.filter(p => p.grupo === g);
+    if(!items.length && !ed) return '';
+    return `<div class="card"><div class="eyebrow">${esc(g)}</div>${items.map(p => `<div class="pd ${p.resolvido?'res':''}">
+      <button class="chk ${p.resolvido?'on':''}" data-act="pend-toggle" data-id="${p.id}" aria-label="Marcar como resolvida" aria-pressed="${p.resolvido}"></button>
+      <div class="pd-body">${ed ? `<input class="pd-in" data-pendtxt="${p.id}" value="${esc(p.texto)}" aria-label="Texto da pendência">` : `<span class="pd-t">${esc(p.texto)}</span>`}</div>
+      <select data-pendlink="${p.id}" aria-label="Ação vinculada"><option value="">Sem ação vinculada</option>${state.tarefas.map(t => `<option value="${t.id}" ${t.id===p.tarefaId?'selected':''}>${esc(t.titulo)}</option>`).join('')}</select>
+      ${ed ? `<button class="btn sm danger" data-act="pend-del" data-id="${p.id}">Excluir</button>` : ''}
+    </div>`).join('') || '<p class="note" style="padding:8px 0">Nenhuma pendência neste grupo.</p>'}</div>`;
+  }).join('');
+  const form = ed ? `<div class="card" style="grid-column:1/-1"><div class="eyebrow">Adicionar pendência</div>
+    <div class="addrow"><select id="pn-grp" aria-label="Grupo">${PEND_GROUPS.map(g => `<option>${esc(g)}</option>`).join('')}</select>
+    <input id="pn-txt" type="text" placeholder="Descreva a decisão em aberto" aria-label="Nova pendência">
+    <button class="btn primary" data-act="pend-add">Adicionar</button></div></div>` : '';
+  $('#pend-list').innerHTML = cards + form;
+}
+
+/* ---------- task sheet ---------- */
+function sheet(html){
+  $('#sheet').innerHTML = html;
+  $('#sheet').scrollTop = 0;
+  $('#sheet').classList.add('open');
+  $('#ov').classList.add('open');
+}
+function closeSheet(){
+  $('#sheet').classList.remove('open');
+  $('#ov').classList.remove('open');
+  sheetTask = null;
+}
+function openTask(id, frenteNova){
+  let t;
+  if(frenteNova){ t = {...blank(), frente:frenteNova}; sheetTask = {isNew:true, frente:frenteNova}; }
+  else { t = task(id); if(!t) return; sheetTask = {isNew:false, id:t.id}; }
+  const ed = mode === 'edit';
+  const fr = FRENTES.find(f => f.id === t.frente);
+  const deps = state.tarefas.filter(x => x.id !== t.id).map(x => `<option value="${x.id}" ${x.id===t.dependeDe?'selected':''}>${esc(x.titulo)}</option>`).join('');
+  sheet(`
+    <div class="sh-head"><div style="min-width:0"><div class="eyebrow">${esc(fr ? fr.nome : '')}</div><h3>${sheetTask.isNew ? 'Nova ação' : esc(t.titulo)}</h3></div>
+      <button class="btn sm" data-act="close">Fechar</button></div>
+    ${ed
+      ? `<div class="field"><label for="sh-tit">Título</label><input id="sh-tit" value="${esc(t.titulo)}"></div>
+         <div class="field"><label for="sh-desc">Descrição</label><textarea id="sh-desc">${esc(t.descricao)}</textarea></div>`
+      : `<p class="sh-desc">${esc(t.descricao)}</p>`}
+    <div class="row2">
+      <div class="field"><label for="sh-status">Status</label><select id="sh-status">${statusOpts(t.status)}</select></div>
+      <div class="field"><label for="sh-prio">Prioridade</label><select id="sh-prio">${prioOpts(t.prioridade)}</select></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label for="sh-resp">Responsável</label><input id="sh-resp" list="dl-resp" value="${esc(t.responsavel)}"></div>
+      <div class="field"><label for="sh-prazo">Prazo</label><input id="sh-prazo" type="date" value="${esc(t.prazo)}"></div>
+    </div>
+    <div class="field"><label for="sh-dep">Depende de</label><select id="sh-dep"><option value="">Nenhuma</option>${deps}</select></div>
+    <div class="field"><label for="sh-obs">Observações</label><textarea id="sh-obs">${esc(t.observacoes)}</textarea></div>
+    <div class="field"><label for="sh-ev">Evidência ou link de entrega</label><input id="sh-ev" value="${esc(t.evidencia)}" placeholder="Link, arquivo ou descrição"></div>
+    <p class="note">Última atualização: ${t.atualizado ? fmtD(t.atualizado) : '—'}</p>
+    <div class="sh-foot">
+      <button class="btn primary" data-act="sh-save">Salvar</button>
+      ${!sheetTask.isNew && ed ? '<button class="btn danger" data-act="sh-del">Excluir ação</button>' : ''}
+    </div>`);
+}
+function saveTask(){
+  const isNew = sheetTask.isNew;
+  const t = isNew ? {...blank(), id:'n' + Date.now().toString(36), frente:sheetTask.frente} : task(sheetTask.id);
+  if(!t){ closeSheet(); return; }
+  if(mode === 'edit'){
+    t.titulo = $('#sh-tit').value.trim() || 'Ação sem título';
+    t.descricao = $('#sh-desc').value;
+  }
+  t.status = $('#sh-status').value;
+  t.prioridade = $('#sh-prio').value;
+  t.responsavel = $('#sh-resp').value.trim();
+  t.prazo = $('#sh-prazo').value;
+  t.dependeDe = $('#sh-dep').value;
+  t.observacoes = $('#sh-obs').value;
+  t.evidencia = $('#sh-ev').value.trim();
+  t.atualizado = today();
+  if(isNew) state.tarefas.push(t);
+  closeSheet();
+  commit();
+}
+function deleteTask(id){
+  state.tarefas = state.tarefas.filter(t => t.id !== id);
+  state.pendencias.forEach(p => { if(p.tarefaId === id) p.tarefaId = ''; });
+  state.tarefas.forEach(t => { if(t.dependeDe === id) t.dependeDe = ''; });
+  closeSheet();
+  commit();
+}
+
+/* ---------- backup, summary, restore ---------- */
+function resumo(){
+  const s = stats(), T = state.tarefas, L = [];
+  const sec = (titulo, arr) => {
+    L.push(titulo + ':');
+    arr.length ? arr.forEach(t => L.push(`- ${t.titulo}${t.responsavel ? ' (' + t.responsavel + ')' : ''}`)) : L.push('- Nenhuma');
+    L.push('');
+  };
+  L.push('PROTOCOLO 30K · OVER BARBER CONCEITO', 'Resumo da reunião · ' + fmtD(today()), '',
+    `Progresso: ${s.done} de ${s.total} ações concluídas (${s.pct}%)`,
+    `Em andamento: ${s.and} · Pendências: ${s.pend} · Atrasadas: ${s.late}`, '');
+  sec('Foco da semana', T.filter(t => t.foco));
+  sec('Em andamento', T.filter(t => t.status === 'Em andamento'));
+  sec('Atrasadas', T.filter(isLate));
+  sec('Próximas prioridades (P0 ainda não concluídas)', T.filter(t => t.prioridade === 'P0' && t.status !== 'Concluída'));
+  const open = state.pendencias.filter(p => !p.resolvido);
+  L.push(`Decisões em aberto: ${open.length}`);
+  open.forEach(p => L.push(`- ${p.texto}`));
+  return L.join('\n');
+}
+function copyText(ta){
+  const fallback = () => { ta.focus(); ta.select(); try{ document.execCommand('copy'); flash('Copiado.'); }catch(e){ flash('Selecione o texto e copie manualmente.'); } };
+  try{
+    navigator.clipboard.writeText(ta.value).then(() => flash('Copiado.'), fallback);
+  }catch(e){ fallback(); }
+}
+function openSummary(){
+  sheet(`<div class="sh-head"><div><div class="eyebrow">Reunião</div><h3>Resumo para WhatsApp ou ata</h3></div><button class="btn sm" data-act="close">Fechar</button></div>
+    <textarea id="sh-ta" style="min-height:360px">${esc(resumo())}</textarea>
+    <div class="sh-foot"><button class="btn primary" data-act="copy-text">Copiar resumo</button></div>`);
+}
+function openBackup(){
+  sheet(`<div class="sh-head"><div><div class="eyebrow">Backup</div><h3>Dados em JSON</h3></div><button class="btn sm" data-act="close">Fechar</button></div>
+    <p class="note">Copie este texto e guarde-o. Ele contém ações, responsáveis, metas, rotinas, pendências e indicadores deste navegador.</p>
+    <textarea id="sh-ta" readonly style="min-height:360px;font-family:ui-monospace,Menlo,monospace;font-size:12px">${esc(JSON.stringify(state, null, 2))}</textarea>
+    <div class="sh-foot"><button class="btn primary" data-act="copy-text">Copiar JSON</button></div>`);
+}
+function openImport(){
+  sheet(`<div class="sh-head"><div><div class="eyebrow">Importar</div><h3>Restaurar um backup</h3></div><button class="btn sm" data-act="close">Fechar</button></div>
+    <p class="note">Cole aqui o JSON copiado do Backup. Os dados atuais deste navegador serão substituídos.</p>
+    <textarea id="sh-ta" placeholder="Cole o JSON aqui" style="min-height:260px;font-family:ui-monospace,Menlo,monospace;font-size:12px"></textarea>
+    <div class="msg" id="sh-msg"></div>
+    <div class="sh-foot"><button class="btn primary" data-act="do-import">Importar backup</button></div>`);
+}
+function doImport(){
+  let obj;
+  try{ obj = JSON.parse($('#sh-ta').value); }
+  catch(e){ $('#sh-msg').textContent = 'O texto não é um JSON válido.'; return; }
+  const v = validate(obj);
+  if(!v.ok){ $('#sh-msg').textContent = v.err; return; }
+  state = merge(obj);
+  closeSheet();
+  commit();
+  flash('Backup importado.');
+}
+
+/* ---------- events ---------- */
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act],[data-modo],[data-f]');
+  if(!el) return;
+  if(el.dataset.modo){ ui.modo = el.dataset.modo; renderPlanoControls(); renderPlanoList(); return; }
+  if(el.dataset.f){ ui.filtro = el.dataset.f; renderPlanoControls(); renderPlanoList(); return; }
+  const id = el.dataset.id, act = el.dataset.act;
+  switch(act){
+    case 'check': {
+      const t = task(id); if(!t) break;
+      t.status = t.status === 'Concluída' ? 'Em andamento' : 'Concluída';
+      t.atualizado = today(); commit(); break;
+    }
+    case 'open': openTask(id); break;
+    case 'foco': {
+      const t = task(id); if(!t) break;
+      if(!t.foco && state.tarefas.filter(x => x.foco).length >= 5){ flash('Máximo de cinco ações em foco.'); break; }
+      t.foco = !t.foco; commit(); break;
+    }
+    case 'goto': {
+      ui.modo = 'frente'; ui.filtro = 'todas'; ui.q = ''; ui.resp = ''; ui.open[id] = true;
+      $('#q').value = '';
+      renderAll();
+      document.getElementById('s-plano').scrollIntoView();
+      document.getElementById('g-' + id)?.scrollIntoView({behavior:'smooth', block:'start'});
+      break;
+    }
+    case 'add-task': openTask(null, id); break;
+    case 'rot-add': state.rotinas[el.dataset.g].push('Nova atividade'); commit(); break;
+    case 'rot-del': state.rotinas[el.dataset.g].splice(+el.dataset.i, 1); commit(); break;
+    case 'pend-toggle': { const p = state.pendencias.find(x => x.id === id); if(p){ p.resolvido = !p.resolvido; commit(); } break; }
+    case 'pend-del': twoClick(el, () => { state.pendencias = state.pendencias.filter(x => x.id !== id); commit(); }); break;
+    case 'pend-add': {
+      const txt = $('#pn-txt').value.trim();
+      if(!txt){ flash('Descreva a pendência antes de adicionar.'); break; }
+      state.pendencias.push({id:'p' + Date.now().toString(36), grupo:$('#pn-grp').value, texto:txt, resolvido:false, tarefaId:''});
+      commit(); break;
+    }
+    case 'edit-toggle': mode = mode === 'edit' ? 'view' : 'edit'; renderAll(); break;
+    case 'copy-summary': openSummary(); break;
+    case 'backup': openBackup(); break;
+    case 'import': openImport(); break;
+    case 'do-import': doImport(); break;
+    case 'copy-text': copyText($('#sh-ta')); break;
+    case 'restore': twoClick(el, () => { state = clone(DEFAULT); mode = 'view'; ui.open = {}; commit(); flash('Versão original restaurada.'); }); break;
+    case 'close': closeSheet(); break;
+    case 'sh-save': saveTask(); break;
+    case 'sh-del': twoClick(el, () => deleteTask(sheetTask.id)); break;
+  }
+});
+
+function twoClick(el, fn){
+  if(el.dataset.armed){ clearTimeout(el._t); delete el.dataset.armed; fn(); return; }
+  el.dataset.armed = '1';
+  el.dataset.label = el.textContent;
+  el.textContent = el.dataset.confirm || 'Confirmar';
+  el._t = setTimeout(() => { delete el.dataset.armed; el.textContent = el.dataset.label; }, 4000);
+}
+
+document.addEventListener('change', e => {
+  const el = e.target;
+  if(el.id === 'f-resp'){ ui.resp = el.value; renderPlanoList(); return; }
+  if(el.dataset.tstatus){ const t = task(el.dataset.tstatus); if(t){ t.status = el.value; t.atualizado = today(); commit(); } return; }
+  if(el.dataset.tprio){ const t = task(el.dataset.tprio); if(t){ t.prioridade = el.value; t.atualizado = today(); commit(); } return; }
+  if(el.dataset.path){
+    const ks = el.dataset.path.split('.');
+    let o = state;
+    for(let i = 0; i < ks.length - 1; i++) o = o[ks[i]];
+    o[ks[ks.length - 1]] = el.dataset.path.startsWith('meta.') ? (Number(el.value) || 0) : el.value;
+    commit(); return;
+  }
+  if(el.dataset.rot){ const [g,i] = el.dataset.rot.split('|'); state.rotinas[g][+i] = el.value; commit(); return; }
+  if(el.dataset.pendtxt){ const p = state.pendencias.find(x => x.id === el.dataset.pendtxt); if(p){ p.texto = el.value.trim() || p.texto; commit(); } return; }
+  if(el.dataset.pendlink){ const p = state.pendencias.find(x => x.id === el.dataset.pendlink); if(p){ p.tarefaId = el.value; commit(); } return; }
+  if(el.dataset.ind){ state.indicadores[el.dataset.ind] = el.value.trim(); commit(); return; }
+});
+$('#q').addEventListener('input', e => { ui.q = e.target.value; renderPlanoList(); });
+$('#ov').addEventListener('click', closeSheet);
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && $('#sheet').classList.contains('open')) closeSheet(); });
+
+renderAll();
+</script>
+
+</html>
