@@ -1,8 +1,4 @@
-<!doctype html>
-<html lang="pt-BR">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <meta name="claude:viewport-fit-sides" content="cover">
 <title>Protocolo 30K Tático</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -150,7 +146,9 @@ input:disabled{opacity:.55}
 .pd:first-of-type{border-top:0}
 .pd-body{flex:1 1 220px;min-width:0}
 .pd-in{width:100%}
+.pd.res{background:var(--green-soft);border-radius:10px;padding-left:10px;padding-right:10px}
 .pd.res .pd-t{text-decoration:line-through;color:var(--sec)}
+.pd.res .chk.on{background:var(--green);border-color:var(--green)}
 .pd select{max-width:100%;flex:1 1 200px}
 .addrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .addrow input{flex:1 1 220px}
@@ -195,6 +193,15 @@ body:not(.editing) .ed-only{display:none!important}
   .brand{width:100%}
   #q{min-width:0;max-width:100%;flex:1 1 100%}
 }
+.rchips{display:flex;flex-wrap:wrap;gap:8px}
+.rchip{border:1px solid var(--line);background:transparent;color:inherit;border-radius:999px;padding:7px 14px;font:inherit;font-size:12px;font-weight:600;letter-spacing:.02em;cursor:pointer}
+.rchip.on{background:var(--mid);border-color:var(--mid);color:#fff}
+.rchip.sm{padding:4px 9px;font-size:11px}
+.rflag{background:var(--navy-soft);color:var(--navy);border-color:transparent;font-weight:600}
+.pill-date{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--sec)}
+.pill-date input{font:inherit;font-size:12px;border:1px solid var(--line);border-radius:999px;padding:4px 8px;background:var(--card);color:var(--fg)}
+.rchips-sm{justify-content:flex-end;gap:5px}
+.rchip:focus-visible{outline:2px solid var(--mid);outline-offset:2px}
 </style>
 </head>
 <body>
@@ -353,6 +360,32 @@ body:not(.editing) .ed-only{display:none!important}
 </datalist>
 
 <script>
+/* ===== Responsáveis por ação ===== */
+const RESP_OPTS = ['VICTOR','RICARDO','CESAR','MKT CONCEITO'];
+const respParts = s => String(s || '').split(',').map(x => x.trim()).filter(Boolean);
+const respSel = t => respParts(t.responsavel).filter(x => RESP_OPTS.includes(x));
+const respOutro = t => respParts(t.responsavel).filter(x => !RESP_OPTS.includes(x)).join(', ');
+document.addEventListener('click', e => {
+  const rb = e.target.closest('[data-rtask]');
+  if(rb){
+    const t = task(rb.dataset.rtask);
+    if(t){
+      const nome = rb.dataset.rname;
+      const atuais = respParts(t.responsavel);
+      const novos = atuais.includes(nome) ? atuais.filter(x => x !== nome) : [...atuais, nome];
+      t.responsavel = novos.join(', ');
+      t.atualizado = today();
+      commit();
+    }
+    return;
+  }
+  const b = e.target.closest('[data-rchip]');
+  if(!b) return;
+  const on = !b.classList.contains('on');
+  b.classList.toggle('on', on);
+  b.setAttribute('aria-pressed', String(on));
+});
+
 const KEY = 'protocolo-30k-tatico-v1';
 const FRENTES = [
   {id:'com', nome:'Comercial & CRM', resp:'Recepcionista / gestão'},
@@ -537,7 +570,7 @@ function renderVisao(){
 function renderPlanoControls(){
   document.querySelectorAll('[data-modo]').forEach(b => b.classList.toggle('on', b.dataset.modo === ui.modo));
   document.querySelectorAll('[data-f]').forEach(b => b.classList.toggle('on', b.dataset.f === ui.filtro));
-  const resps = [...new Set(state.tarefas.map(t => t.responsavel).filter(Boolean))].sort();
+  const resps = RESP_OPTS;
   if(ui.resp && !resps.includes(ui.resp)) ui.resp = '';
   $('#f-resp').innerHTML = '<option value="">Todos os responsáveis</option>' +
     resps.map(r => `<option value="${esc(r)}" ${r===ui.resp?'selected':''}>${esc(r)}</option>`).join('');
@@ -568,6 +601,8 @@ function taskRow(t){
     <div class="t-right">
       <select class="pill st-sel ${stCls(t.status)}" data-tstatus="${t.id}" aria-label="Status">${statusOpts(t.status)}</select>
       <select class="pill" data-tprio="${t.id}" aria-label="Prioridade">${prioOpts(t.prioridade)}</select>
+      <select class="pill rflag" data-tresp="${t.id}" aria-label="Responsável">${['', ...RESP_OPTS].map(n => `<option value="${esc(n)}" ${n===respSel(t)[0]?'selected':''}>${n||'Sem responsável'}</option>`).join('')}</select>
+      <label class="pill-date"><span>Data final</span><input type="date" data-tprazo="${t.id}" value="${esc(t.prazo||'')}" aria-label="Data final da tarefa"></label>
       <button class="btn sm ${t.foco?'on':''}" data-act="foco" data-id="${t.id}">${t.foco?'Em foco':'Foco'}</button>
     </div>
   </div>`;
@@ -576,7 +611,7 @@ function renderPlanoList(){
   const q = ui.q.trim().toLowerCase();
   const list = state.tarefas.filter(t =>
     FILT[ui.filtro](t) &&
-    (!ui.resp || t.responsavel === ui.resp) &&
+    (!ui.resp || respParts(t.responsavel).includes(ui.resp)) &&
     (!q || (t.titulo + ' ' + t.descricao + ' ' + t.responsavel).toLowerCase().includes(q)));
   const ed = mode === 'edit';
   const groups = ui.modo === 'frente'
@@ -675,7 +710,6 @@ function renderPend(){
     return `<div class="card"><div class="eyebrow">${esc(g)}</div>${items.map(p => `<div class="pd ${p.resolvido?'res':''}">
       <button class="chk ${p.resolvido?'on':''}" data-act="pend-toggle" data-id="${p.id}" aria-label="Marcar como resolvida" aria-pressed="${p.resolvido}"></button>
       <div class="pd-body">${ed ? `<input class="pd-in" data-pendtxt="${p.id}" value="${esc(p.texto)}" aria-label="Texto da pendência">` : `<span class="pd-t">${esc(p.texto)}</span>`}</div>
-      <select data-pendlink="${p.id}" aria-label="Ação vinculada"><option value="">Sem ação vinculada</option>${state.tarefas.map(t => `<option value="${t.id}" ${t.id===p.tarefaId?'selected':''}>${esc(t.titulo)}</option>`).join('')}</select>
       ${ed ? `<button class="btn sm danger" data-act="pend-del" data-id="${p.id}">Excluir</button>` : ''}
     </div>`).join('') || '<p class="note" style="padding:8px 0">Nenhuma pendência neste grupo.</p>'}</div>`;
   }).join('');
@@ -716,10 +750,11 @@ function openTask(id, frenteNova){
       <div class="field"><label for="sh-status">Status</label><select id="sh-status">${statusOpts(t.status)}</select></div>
       <div class="field"><label for="sh-prio">Prioridade</label><select id="sh-prio">${prioOpts(t.prioridade)}</select></div>
     </div>
-    <div class="row2">
-      <div class="field"><label for="sh-resp">Responsável</label><input id="sh-resp" list="dl-resp" value="${esc(t.responsavel)}"></div>
-      <div class="field"><label for="sh-prazo">Prazo</label><input id="sh-prazo" type="date" value="${esc(t.prazo)}"></div>
+    <div class="field"><label>Responsáveis</label>
+      <div class="rchips" role="group" aria-label="Responsáveis">${RESP_OPTS.map(n => { const on = respSel(t).includes(n); return `<button type="button" class="rchip ${on?'on':''}" data-rchip="${n}" aria-pressed="${on}">${n}</button>`; }).join('')}</div>
     </div>
+    <div class="field"><label for="sh-resp">Outro responsável (opcional)</label><input id="sh-resp" value="${esc(respOutro(t))}" placeholder="Nome ou função"></div>
+    <div class="field"><label for="sh-prazo">Prazo</label><input id="sh-prazo" type="date" value="${esc(t.prazo)}"></div>
     <div class="field"><label for="sh-dep">Depende de</label><select id="sh-dep"><option value="">Nenhuma</option>${deps}</select></div>
     <div class="field"><label for="sh-obs">Observações</label><textarea id="sh-obs">${esc(t.observacoes)}</textarea></div>
     <div class="field"><label for="sh-ev">Evidência ou link de entrega</label><input id="sh-ev" value="${esc(t.evidencia)}" placeholder="Link, arquivo ou descrição"></div>
@@ -739,7 +774,8 @@ function saveTask(){
   }
   t.status = $('#sh-status').value;
   t.prioridade = $('#sh-prio').value;
-  t.responsavel = $('#sh-resp').value.trim();
+  const escolhidos = [...document.querySelectorAll('[data-rchip].on')].map(b => b.dataset.rchip);
+  t.responsavel = [...escolhidos, $('#sh-resp').value.trim()].filter(Boolean).join(', ');
   t.prazo = $('#sh-prazo').value;
   t.dependeDe = $('#sh-dep').value;
   t.observacoes = $('#sh-obs').value;
@@ -875,6 +911,8 @@ function twoClick(el, fn){
 document.addEventListener('change', e => {
   const el = e.target;
   if(el.id === 'f-resp'){ ui.resp = el.value; renderPlanoList(); return; }
+  if(el.dataset.tresp){ const t = task(el.dataset.tresp); if(t){ const outros = respParts(t.responsavel).filter(x => !RESP_OPTS.includes(x)); t.responsavel = [el.value, ...outros].filter(Boolean).join(', '); t.atualizado = today(); commit(); } return; }
+  if(el.dataset.tprazo){ const t = task(el.dataset.tprazo); if(t){ t.prazo = el.value; t.atualizado = today(); commit(); } return; }
   if(el.dataset.tstatus){ const t = task(el.dataset.tstatus); if(t){ t.status = el.value; t.atualizado = today(); commit(); } return; }
   if(el.dataset.tprio){ const t = task(el.dataset.tprio); if(t){ t.prioridade = el.value; t.atualizado = today(); commit(); } return; }
   if(el.dataset.path){
@@ -896,4 +934,4 @@ document.addEventListener('keydown', e => { if(e.key === 'Escape' && $('#sheet')
 renderAll();
 </script>
 
-</html>
+</body></html>
