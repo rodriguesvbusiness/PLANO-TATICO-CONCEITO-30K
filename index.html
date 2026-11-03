@@ -361,7 +361,7 @@ body:not(.editing) .ed-only{display:none!important}
 
 <script>
 /* ===== Responsáveis por ação ===== */
-const RESP_OPTS = ['VICTOR','RICARDO','CESAR','MKT CONCEITO'];
+const RESP_OPTS = ['VICTOR','RICARDO','CESAR','RAMOM','MKT CONCEITO','COMERCIAL CONCEITO'];
 const respParts = s => String(s || '').split(',').map(x => x.trim()).filter(Boolean);
 const respSel = t => respParts(t.responsavel).filter(x => RESP_OPTS.includes(x));
 const respOutro = t => respParts(t.responsavel).filter(x => !RESP_OPTS.includes(x)).join(', ');
