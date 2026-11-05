@@ -196,6 +196,11 @@ body:not(.editing) .ed-only{display:none!important}
 .rchips{display:flex;flex-wrap:wrap;gap:8px}
 .rchip{border:1px solid var(--line);background:transparent;color:inherit;border-radius:999px;padding:7px 14px;font:inherit;font-size:12px;font-weight:600;letter-spacing:.02em;cursor:pointer}
 .rchip.on{background:var(--mid);border-color:var(--mid);color:#fff}
+.obs-list{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;margin-bottom:8px}
+.obs-item{display:grid;grid-template-columns:86px 1fr;gap:10px;font-size:13px;padding:8px 10px;border-radius:10px;background:var(--mute-soft, var(--line))}
+.obs-item time{color:var(--sec);font-size:12px;font-weight:600}
+.obs-add{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.obs-add textarea{width:100%}
 .rchip.sm{padding:4px 9px;font-size:11px}
 .rflag{background:var(--navy-soft);color:var(--navy);border-color:transparent;font-weight:600}
 .pill-date{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--sec)}
@@ -448,6 +453,13 @@ const fmtD = s => { if(!s) return ''; const [y,m,d] = String(s).slice(0,10).spli
 const num = v => { const x = parseFloat(v); return isNaN(x) ? NaN : x; };
 const ST_KEYS = ['nao','and','agu','con','blo'];
 const stCls = s => 'st-' + (ST_KEYS[STATUS.indexOf(s)] || 'nao');
+const obsListHTML = t => {
+  const notas = [...(t.notas || [])];
+  if(t.observacoes && !notas.length) notas.push({data: '', texto: t.observacoes});
+  return notas.length
+    ? notas.slice().reverse().map(n => `<div class="obs-item"><time>${n.data ? fmtD(n.data) : 'Anterior'}</time><span>${esc(n.texto)}</span></div>`).join('')
+    : '<p class="note">Nenhuma observação ainda.</p>';
+};
 const blank = () => ({frente:'com',titulo:'',descricao:'',prioridade:'P1',status:'Não iniciada',responsavel:'',prazo:'',observacoes:'',evidencia:'',dependeDe:'',foco:false,atualizado:''});
 
 function defaults(){
@@ -756,7 +768,11 @@ function openTask(id, frenteNova){
     <div class="field"><label for="sh-resp">Outro responsável (opcional)</label><input id="sh-resp" value="${esc(respOutro(t))}" placeholder="Nome ou função"></div>
     <div class="field"><label for="sh-prazo">Prazo</label><input id="sh-prazo" type="date" value="${esc(t.prazo)}"></div>
     <div class="field"><label for="sh-dep">Depende de</label><select id="sh-dep"><option value="">Nenhuma</option>${deps}</select></div>
-    <div class="field"><label for="sh-obs">Observações</label><textarea id="sh-obs">${esc(t.observacoes)}</textarea></div>
+    <div class="field"><label>Observações</label>
+      <div class="obs-list" id="obs-list">${obsListHTML(t)}</div>
+      <div class="obs-add"><textarea id="obs-new" rows="2" placeholder="Escreva uma observação e clique em Adicionar" aria-label="Nova observação"></textarea>
+      <button type="button" class="btn sm" data-act="obs-add" data-id="${t.id}">Adicionar observação</button></div>
+    </div>
     <div class="field"><label for="sh-ev">Evidência ou link de entrega</label><input id="sh-ev" value="${esc(t.evidencia)}" placeholder="Link, arquivo ou descrição"></div>
     <p class="note">Última atualização: ${t.atualizado ? fmtD(t.atualizado) : '—'}</p>
     <div class="sh-foot">
@@ -778,7 +794,6 @@ function saveTask(){
   t.responsavel = [...escolhidos, $('#sh-resp').value.trim()].filter(Boolean).join(', ');
   t.prazo = $('#sh-prazo').value;
   t.dependeDe = $('#sh-dep').value;
-  t.observacoes = $('#sh-obs').value;
   t.evidencia = $('#sh-ev').value.trim();
   t.atualizado = today();
   if(isNew) state.tarefas.push(t);
@@ -863,6 +878,18 @@ document.addEventListener('click', e => {
       t.atualizado = today(); commit(); break;
     }
     case 'open': openTask(id); break;
+    case 'obs-add': {
+      const tk = task(id); const txt = ($('#obs-new').value || '').trim();
+      if(!tk || !txt) break;
+      tk.notas = [...(tk.notas || []), {data: today(), texto: txt}];
+      tk.atualizado = today();
+      save();
+      $('#obs-list').innerHTML = obsListHTML(tk);
+      $('#obs-new').value = '';
+      $('#obs-new').focus();
+      renderAll();
+      break;
+    }
     case 'foco': {
       const t = task(id); if(!t) break;
       if(!t.foco && state.tarefas.filter(x => x.foco).length >= 5){ flash('Máximo de cinco ações em foco.'); break; }
